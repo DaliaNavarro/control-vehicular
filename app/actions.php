@@ -19,7 +19,7 @@ function handleAction(): void {
   if($counts['trips']||$counts['periods'])throw new RuntimeException('Este vehículo tiene historial. Para conservarlo, registra un periodo de inactividad. Solo se eliminan vehículos sin bitácoras ni periodos.');execute('DELETE FROM vehicles WHERE id=?',[$id]);db()->commit();flash('Vehículo eliminado.');redirect('vehicles');
  }
  if($action==='trip_save'){
-  $t=normalizeTrip($_POST);$initial=null;if(!empty($_POST['add_fuel']))$initial=normalizeFuel($_POST);
+  $t=normalizeTripForm($_POST);$initial=null;if(!empty($_POST['add_fuel']))$initial=normalizeFuel($_POST);
   $before=$id?need('trips',$id):null;$lockIds=array_unique([$t['vehicle_id'],(int)($before['vehicle_id']??$t['vehicle_id'])]);sort($lockIds);
   db()->beginTransaction();foreach($lockIds as $lockId)row('SELECT id FROM vehicles WHERE id=? FOR UPDATE',[$lockId]);$vehicle=need('vehicles',$t['vehicle_id']);
   if($id){$old=need('trips',$id);if((int)$old['version']!==(int)($_POST['version']??0)||(int)$old['vehicle_id']!==(int)$before['vehicle_id'])throw new RuntimeException('Otra persona modificó esta bitácora. Recarga para revisar la versión actual.');}

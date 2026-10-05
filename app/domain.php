@@ -1,11 +1,17 @@
 <?php
 declare(strict_types=1);
+// The web form has a single date; legacy imports retain their explicit dates.
+function normalizeTripForm(array $p): array {
+ $date=dateValue($p['request_date']??'','Fecha de solicitud');
+ $p['departure_date']=$p['arrival_date']=$date;
+ return normalizeTrip($p);
+}
 function normalizeTrip(array $p): array {
  $request=dateValue($p['request_date']??'','Fecha de solicitud');
  $start=dateValue($p['departure_date']??'','Fecha de salida');$end=dateValue($p['arrival_date']??'','Fecha de llegada');
  foreach(['departure_time','arrival_time'] as $f)if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D',(string)($p[$f]??'')))throw new RuntimeException('Las horas deben usar el formato HH:MM de 24 horas.');
  $s=$start.' '.$p['departure_time'].':00';$t=$end.' '.$p['arrival_time'].':00';
- if($t<=$s)throw new RuntimeException('La llegada debe ser posterior a la salida. Para viajes nocturnos cambia la fecha de llegada.');
+ if($t<=$s)throw new RuntimeException($start===$end?'La hora de llegada debe ser posterior a la hora de salida dentro del mismo día.':'La llegada debe ser posterior a la salida.');
  $a=decimalValue($p['km_start']??'','Km iniciales');$b=decimalValue($p['km_end']??'','Km finales');
  if((float)$b<(float)$a)throw new RuntimeException('Los km finales no pueden ser menores que los iniciales.');
  $vid=filter_var($p['vehicle_id']??0,FILTER_VALIDATE_INT);if(!$vid||$vid<1)throw new RuntimeException('Selecciona un vehículo válido.');
